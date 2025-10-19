@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能打印机监控系统</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 动态背景 -->
+    <div class="background">
+        <div class="gradient-bg"></div>
+    </div>
+
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-print"></i>
+                    <h1>智能打印机监控系统</h1>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-badge">
+                        <i class="fas fa-microchip"></i>
+                        <span>ESP32</span>
+                    </div>
+                    <div class="stat-badge">
+                        <i class="fas fa-bluetooth"></i>
+                        <span>BLE 5.0</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- 左侧控制面板 -->
+            <div class="control-panel glass">
+                <div class="panel-header">
+                    <h2><i class="fas fa-sliders-h"></i> 控制面板</h2>
+                </div>
+
+                <!-- 连接状态 -->
+                <div class="status-card">
+                    <div class="status-header">
+                        <h3>连接状态</h3>
+                        <div class="status-indicator">
+                            <div class="pulse-dot disconnected" id="statusDot"></div>
+                            <span id="statusText">离线</span>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="connectBtn">
+                            <i class="fas fa-link"></i>连接设备
+                        </button>
+                        <button class="btn btn-danger" id="disconnectBtn" disabled>
+                            <i class="fas fa-unlink"></i>断开连接
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 设备信息 -->
+                <div class="info-card">
+                    <h3><i class="fas fa-info-circle"></i> 设备信息</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">设备名称</span>
+                            <span class="info-value" id="deviceName">Printer</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">信号强度</span>
+                            <span class="info-value" id="rssi">- dBm</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">服务UUID</span>
+                            <span class="info-value uuid">4fafc201...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据操作 -->
+                <div class="action-card">
+                    <h3><i class="fas fa-database"></i> 数据操作</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn success" id="saveBtn" disabled>
+                            <i class="fas fa-save"></i>保存
+                        </button>
+                        <button class="action-btn warning" id="clearBtn" disabled>
+                            <i class="fas fa-broom"></i>清空
+                        </button>
+                        <button class="action-btn info" id="exportBtn" disabled>
+                            <i class="fas fa-download"></i>导出
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中间数据区域 -->
+            <div class="data-panel glass">
+                <div class="panel-header">
+                    <h2><i class="fas fa-chart-bar"></i> 数据监控</h2>
+                    <div class="panel-actions">
+                        <button class="icon-btn" id="testBtn" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 标签页 -->
+                <div class="tabs">
+                    <div class="tab active" data-tab="received">
+                        <i class="fas fa-inbox"></i>接收数据
+                    </div>
+                    <div class="tab" data-tab="commands">
+                        <i class="fas fa-terminal"></i>命令控制
+                    </div>
+                    <div class="tab" data-tab="storage">
+                        <i class="fas fa-archive"></i>数据存储
+                    </div>
+                </div>
+
+                <!-- 接收数据标签 -->
+                <div class="tab-content active" id="received-tab">
+                    <div class="data-container" id="dataContainer">
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>暂无数据</h3>
+                            <p>连接设备后，接收的数据将显示在这里</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 命令控制标签 -->
+                <div class="tab-content" id="commands-tab">
+                    <div class="command-panel">
+                        <h4>打印机控制</h4>
+                        <div class="command-grid">
+                            <button class="command-btn" id="statusQueryBtn">
+                                <i class="fas fa-heartbeat"></i>状态查询
+                            </button>
+                            <button class="command-btn" id="feedPaperBtn">
+                                <i class="fas fa-arrow-down"></i>进纸
+                            </button>
+                            <button class="command-btn" id="cutPaperBtn">
+                                <i class="fas fa-cut"></i>切纸
+                            </button>
+                            <button class="command-btn" id="resetPrinterBtn">
+                                <i class="fas fa-redo"></i>复位
+                            </button>
+                            <button class="command-btn" id="beepBtn">
+                                <i class="fas fa-bell"></i>蜂鸣器
+                            </button>
+                            <button class="command-btn" id="printTestBtn">
+                                <i class="fas fa-print"></i>测试页
+                            </button>
+                        </div>
+                    </div>
+                    <div class="command-log" id="commandContainer">
+                        <div class="empty-state">
+                            <i class="fas fa-terminal"></i>
+                            <h3>命令日志</h3>
+                            <p>发送的命令将记录在这里</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据存储标签 -->
+                <div class="tab-content" id="storage-tab">
+                    <div class="storage-container" id="storageContainer">
+                        <div class="empty-state">
+                            <i class="fas fa-archive"></i>
+                            <h3>存储数据</h3>
+                            <p>保存的数据将显示在这里</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧状态面板 -->
+            <div class="status-panel glass">
+                <div class="panel-header">
+                    <h2><i class="fas fa-chart-line"></i> 系统状态</h2>
+                    <button class="icon-btn" id="refreshStatusBtn" disabled>
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+
+                <!-- 打印机状态 -->
+                <div class="status-section">
+                    <h3><i class="fas fa-print"></i> 打印机状态</h3>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="status-icon online">
+                                <i class="fas fa-plug"></i>
+                            </div>
+                            <div class="status-info">
+                                <span class="status-label">连接状态</span>
+                                <span class="status-value" id="printerConnectionStatus">离线</span>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-icon warning">
+                                <i class="fas fa-paper-plane"></i>
+                            </div>
+                            <div class="status-info">
+                                <span class="status-label">纸张状态</span>
+                                <span class="status-value" id="paperStatus">未知</span>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-icon normal">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <div class="status-info">
+                                <span class="status-label">打印头温度</span>
+                                <span class="status-value" id="headTemperature">-</span>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-icon normal">
+                                <i class="fas fa-battery-half"></i>
+                            </div>
+                            <div class="status-info">
+                                <span class="status-label">电池电量</span>
+                                <span class="status-value" id="batteryLevel">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统统计 -->
+                <div class="stats-section">
+                    <h3><i class="fas fa-chart-pie"></i> 系统统计</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon primary">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="dataCount">0</span>
+                                <span class="stat-label">数据包</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon success">
+                                <i class="fas fa-hdd"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="totalBytes">0</span>
+                                <span class="stat-label">总字节</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon warning">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="connectionCount">0</span>
+                                <span class="stat-label">连接次数</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon danger">
+                                <i class="fas fa-bug"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="errorCount">0</span>
+                                <span class="stat-label">错误计数</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 实时活动 -->
+                <div class="activity-section">
+                    <h3><i class="fas fa-clock"></i> 实时活动</h3>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-bluetooth-b"></i>
+                        </div>
+                        <div class="activity-info">
+                            <span class="activity-text">最后活动</span>
+                            <span class="activity-time" id="lastActivity">-</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <div class="activity-info">
+                            <span class="activity-text">运行时间</span>
+                            <span class="activity-time" id="uptime">0分钟</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript文件 -->
+    <script src="js/bluetooth.js"></script>
+    <script src="js/printer-controller.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
